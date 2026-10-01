@@ -139,3 +139,14 @@ Append only. Newest entry at the bottom. Never rewrite an earlier entry; correct
 - Evidence: MX lookup output in the Claude Code session 2026-10-01.
 - Change to the client plan, if any: "A domain you control" is not enough: check that the domain is not a verified domain in any production Entra tenant before using it for Microsoft sign-ups. Check MX and ask the owner.
 - Accepted risks added, if any: Lab email address is in the public repo (spam and phishing target); it protects only throwaway lab accounts. Use MFA on it.
+
+## 2026-10-01, Phase 0, Okta org created with the owner's work email
+- What the docs said: Plan section 3: Okta needs a unique business email per org, so use a domain you control or a free Outlook address. Lab email is `la-migration-lab@outlook.com`.
+- What actually happened:
+  - Okta Integrator Free Plan sign-up rejected `la-migration-lab@outlook.com` (exact error text not captured). The plan's "free Outlook address" option does not work.
+  - Owner signed up with `mark@lencioni.io` instead. Org: `integrator-2631921`; Admin Console https://integrator-2631921-admin.okta.com/; org URL https://integrator-2631921.okta.com.
+  - Hard-rule check: no change was made to the company Microsoft 365 tenant. The address already existed; only Okta's sign-up and activation emails go to that mailbox. Not a breach of CLAUDE.md, but the Okta super admin now uses the owner's work identity.
+- Time taken: under 15 minutes.
+- Evidence: Org URL supplied by the owner 2026-10-01.
+- Change to the client plan, if any: Free email providers fail Okta's "Work Email" check; lab staff need an address on a domain that is not tied to any production tenant. Budget a cheap throwaway domain if a clean separation is required.
+- Accepted risks added, if any: Okta lab super admin uses `mark@lencioni.io`. Never connect this Okta org to the lencioni.io tenant (no Microsoft IdP, no Org2Org, no SCIM toward lencioni.io). That address can no longer sign up for another Integrator org (unique email per org). Enroll MFA on the Okta admin.
