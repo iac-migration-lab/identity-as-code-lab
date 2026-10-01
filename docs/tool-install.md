@@ -3,9 +3,9 @@
 Versions and download URLs checked 2026-10-01 against the vendor release pages listed under Sources.
 
 ## Design
-- Pinned binaries go in `~/lab-tools/` and are only on PATH after `source ~/lab-tools/env.sh`. Nothing else on the machine changes (Homebrew Node 26 stays as is).
+- Pinned binaries go in `~/Projects/okta-to-entra-migration/lab-tools/` (inside the project, git-ignored) and are only on PATH after `source ~/Projects/okta-to-entra-migration/lab-tools/env.sh`. Nothing else on the machine changes (Homebrew Node 26 stays as is).
 - Every download is checksum-verified before it is unpacked.
-- Azure CLI and PowerShell come from Homebrew, which installs only the current version. They are pinned by `brew pin` (formula) and by the version check below, not by exact install.
+- Azure CLI and PowerShell come from Homebrew (both as formulae), which installs only the current version. They are pinned by `brew pin` (formula) and by the version check below, not by exact install.
 
 ## Pinned versions
 
@@ -13,9 +13,9 @@ Versions and download URLs checked 2026-10-01 against the vendor release pages l
 |---|---|---|---|
 | Terraform CE (Community Edition) | 1.16.4 | releases.hashicorp.com zip + SHA256SUMS | Yes |
 | Azure CLI | 2.90.0 | `brew install azure-cli` (Microsoft's documented macOS method) | Yes, method and current version |
-| SailPoint CLI (`sail`) | 2.6.0 | GitHub release tarball + checksums file | Yes, release assets. UNVERIFIED: that the checksums file lists the Darwin tarball, and that the tarball holds `sail` at its root |
+| SailPoint CLI (`sail`) | 2.6.0 | GitHub release tarball + checksums file | Yes, release assets, checksum line, and tarball layout (confirmed on install 2026-10-01) |
 | Conftest | 0.71.0 | GitHub release tarball + checksums.txt | Yes |
-| PowerShell 7 | 7.6.6 | `brew install --cask powershell` (already installed) | Yes, latest release |
+| PowerShell 7 | 7.6.6 | `brew install powershell` (Homebrew formula, not a cask; already installed) | Yes, latest release and formula type (2026-10-01) |
 | Microsoft365DSC | 1.26.909.1 | PowerShell Gallery `Install-Module` | Yes, version and PowerShell 7.6+ requirement. UNVERIFIED: macOS support (docs mention Windows only) |
 | Node LTS (Long-Term Support) | 24.21.0 | nodejs.org tarball + SHASUMS256.txt | Yes |
 | Stoplight Prism | 5.16.0 | `npm install -g @stoplight/prism-cli@5.16.0` (needs Node >= 24.18.0) | Yes |
@@ -27,7 +27,7 @@ Paste the whole block into a terminal. It runs in a child bash shell, so a failu
 ```bash
 bash -euo pipefail <<'EOF'
 TF=1.16.4; SAIL=2.6.0; CONFTEST=0.71.0; NODE=24.21.0; PRISM=5.16.0; M365DSC=1.26.909.1
-T="$HOME/lab-tools"; mkdir -p "$T/bin" "$T/dl"; cd "$T/dl"
+T="$HOME/Projects/okta-to-entra-migration/lab-tools"; mkdir -p "$T/bin" "$T/dl"; cd "$T/dl"
 
 # Terraform CE
 curl -fsSLO "https://releases.hashicorp.com/terraform/$TF/terraform_${TF}_darwin_arm64.zip"
@@ -35,11 +35,11 @@ curl -fsSLO "https://releases.hashicorp.com/terraform/$TF/terraform_${TF}_SHA256
 grep " terraform_${TF}_darwin_arm64.zip$" "terraform_${TF}_SHA256SUMS" | shasum -a 256 -c -
 unzip -o -q "terraform_${TF}_darwin_arm64.zip" terraform -d "$T/bin"
 
-# SailPoint CLI (UNVERIFIED: checksum line name and tarball layout)
+# SailPoint CLI (binary sits at sail_Darwin_arm64/bin/sail inside the tarball)
 curl -fsSLO "https://github.com/sailpoint-oss/sailpoint-cli/releases/download/$SAIL/sail_Darwin_arm64.tar.gz"
 curl -fsSLO "https://github.com/sailpoint-oss/sailpoint-cli/releases/download/$SAIL/sail_${SAIL}_checksums.txt"
 grep " sail_Darwin_arm64.tar.gz$" "sail_${SAIL}_checksums.txt" | shasum -a 256 -c -
-tar -xzf sail_Darwin_arm64.tar.gz -C "$T/bin" sail
+tar -xzf sail_Darwin_arm64.tar.gz -C "$T/bin" --strip-components 2 sail_Darwin_arm64/bin/sail
 
 # Conftest
 curl -fsSLO "https://github.com/open-policy-agent/conftest/releases/download/v$CONFTEST/conftest_${CONFTEST}_Darwin_arm64.tar.gz"
@@ -63,14 +63,14 @@ brew install azure-cli
 brew pin azure-cli
 
 # PowerShell 7 (already present at 7.6.6; installs current if missing)
-brew list --cask powershell >/dev/null 2>&1 || brew install --cask powershell
+brew list --formula powershell >/dev/null 2>&1 || brew install powershell
 
 # Microsoft365DSC (UNVERIFIED on macOS)
 pwsh -NoProfile -Command "Install-Module Microsoft365DSC -RequiredVersion $M365DSC -Scope CurrentUser -Force"
 
 # Lab PATH, opt-in per terminal
 printf 'export PATH="%s/bin:%s/node/bin:$PATH"\n' "$T" "$T" > "$T/env.sh"
-echo "Done. Run: source ~/lab-tools/env.sh"
+echo "Done. Run: source ~/Projects/okta-to-entra-migration/lab-tools/env.sh"
 EOF
 ```
 
@@ -79,7 +79,7 @@ EOF
 Run this, then paste the full output back.
 
 ```bash
-source ~/lab-tools/env.sh
+source ~/Projects/okta-to-entra-migration/lab-tools/env.sh
 echo "terraform: $(terraform -version | head -1)"
 echo "az: $(az version --query '"azure-cli"' -o tsv)"
 echo "sail: $(sail --version 2>&1 | head -1)"
