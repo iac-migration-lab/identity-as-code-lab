@@ -127,3 +127,15 @@ Append only. Newest entry at the bottom. Never rewrite an earlier entry; correct
 - Evidence: `gh api repos/iac-migration-lab/identity-as-code-lab/commits/<old sha>` returns 404 for 3c682fa, 61b87d6, 88d2358, d6eca41, 4ec1f3e.
 - Change to the client plan, if any: To scrub data from a GitHub repo's history, rewriting plus force-pushing is not enough; delete and recreate the repo (or ask GitHub Support to purge) and check old SHAs before making it public. Set the commit email before the first commit.
 - Accepted risks added, if any: Owner's name and mark@lencioni.io are public in commit metadata (accepted by owner).
+
+## 2026-10-01, Phase 0, Lab email; company domain ruled out for Microsoft sign-ups
+- What the docs said: Plan section 3: dedicated lab mailbox, "use a domain you control or a free Outlook address". CLAUDE.md: never reference or configure the owner's company Microsoft 365 tenant.
+- What actually happened:
+  - Owner proposed `okta-entra-mig@lencioni.io`. `dig MX lencioni.io` returned `lencioni-io.mail.protection.outlook.com`; owner confirmed lencioni.io is the company Microsoft 365 tenant.
+  - Ruled out: creating the alias would configure the company tenant, and Microsoft would treat an `@lencioni.io` address on the Azure or Entra sign-up as an account in that tenant, so the lab subscription or admin roles could end up attached to it.
+  - Owner created `la-migration-lab@outlook.com` (personal Microsoft account) for all lab sign-ups. Recorded in docs/lab-naming.md.
+  - Okta sign-up page (https://developer.okta.com/signup/, read 2026-10-01) asks for "Work Email" and states no rule on free providers; whether it accepts outlook.com is still UNVERIFIED.
+- Time taken: under 15 minutes.
+- Evidence: MX lookup output in the Claude Code session 2026-10-01.
+- Change to the client plan, if any: "A domain you control" is not enough: check that the domain is not a verified domain in any production Entra tenant before using it for Microsoft sign-ups. Check MX and ask the owner.
+- Accepted risks added, if any: Lab email address is in the public repo (spam and phishing target); it protects only throwaway lab accounts. Use MFA on it.
