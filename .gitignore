@@ -1,0 +1,21 @@
+# never commit these
+*.pem
+*.key
+*.p12
+*.pfx
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.auto.tfvars.example
+.terraform/
+.terraform.lock.hcl
+crash.log
+*.env
+.env*
+okta-inventory/export/
+**/users-*.json
+**/assignments-*.json
+.DS_Store
+# unredacted source docs, kept local only
+claude/
+*.docx
