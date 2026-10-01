@@ -10,7 +10,7 @@ Be honest with yourself about this up front, because it shapes what you carry ba
 - Okta read-only inventory via Terraform import + generate-config, nightly snapshots, PII split (counts in Git, JSON in Azure Storage).
 - Entra ID brownfield import of hand-built Conditional Access (CA) policies and apps, and a clean plan afterward.
 - Okta SAML app translated into an Entra enterprise app, with both claims mechanisms (claims mapping policy vs custom claims policy) tried on real apps.
-- The pipeline: OpenID Connect (OIDC) federation from GitHub Actions to Entra with no secrets, three pipeline identities, environment gates, ServiceNow change-ticket gate, OPA (Open Policy Agent)/Conftest rules, drift job that opens a GitHub issue.
+- The pipeline: OpenID Connect (OIDC) federation from GitHub Actions to Entra with no secrets, three pipeline identities, environment gates, ITSM-agnostic change-ticket gate (docs/change-gate-design.md), OPA (Open Policy Agent)/Conftest rules, drift job that opens a GitHub issue.
 - A two-app cutover wave with validation window, Okta assignment removal, and a rollback drill.
 - The msgraph (Microsoft Graph) preview provider on one real gap object (authentication methods policy).
 - Microsoft365DSC (Desired State Configuration) as a read-only snapshot/drift tool.
@@ -29,7 +29,7 @@ Be honest with yourself about this up front, because it shapes what you carry ba
 | Entra ID (alternative) | Microsoft 365 E5 developer sandbox | Includes Entra P2, 25 licenses, 90 days renewable. Eligibility is Visual Studio Pro/Enterprise subscribers, ISV/partner program members, or Premier/Unified support customers. Not open to individuals otherwise. | 90 days, renewable on activity |
 | Azure | Azure free account | $200 credit for 30 days, always-free tiers after. Credit card required ($1 auth hold). Storage account for Terraform state costs pennies. | 30-day credit window |
 | GitHub | Free plan | Environments with required reviewers and wait timers are only available on PUBLIC repositories on Free/Pro/Team. Private repos need Enterprise. | None |
-| ServiceNow | Personal Developer Instance (PDI) | Full instance, REST API, change_request table. | Reclaimed after inactivity (log in regularly) |
+| ITSM (IT Service Management) | GitHub Issues as the change-record stand-in (ServiceNow PDI had no instances available 2026-10-01) | Labels for state, body lines for the window; see docs/change-gate-design.md. | None |
 | Terraform | Community Edition (CE) | Business Source License; fine for personal use. | None |
 | Microsoft365DSC | Open source PowerShell | Read-only export only in this POC. | None |
 | SailPoint ISC | None | Substitute: Stoplight Prism mock server fed by sailpoint-oss/api-specs OpenAPI, plus the SailPoint CLI pointed at the mock. | None |
@@ -47,7 +47,7 @@ Be honest with yourself about this up front, because it shapes what you carry ba
 - Okta cutover identity: a second service app with `okta.apps.manage` only, used in Phase 4 to remove assignments, disabled between waves.
 - Entra identities: three app registrations (`iac-reader`, `iac-planner`, `iac-applier`) with federated credentials bound to specific GitHub repo + environment subjects. No client secrets anywhere. Graph application permissions kept to what each phase needs (table in Phase 3).
 - Azure Storage: versioning and soft delete on; `iac-applier` gets Storage Blob Data Contributor on the state container only, `iac-reader` gets Storage Blob Data Reader. Skip private endpoints in the lab (cost); note it as a difference from the client design.
-- ServiceNow PDI: a dedicated integration user with read on `change_request` only; basic auth over HTTPS is acceptable in a PDI, not in the client design.
+- Change gate: the workflow's `GITHUB_TOKEN` with `issues: read` only. In the client design, a dedicated read-only ITSM integration identity.
 - Break-glass: one cloud-only Global Administrator account with a long passphrase and FIDO2 or authenticator app, excluded from every CA policy by module and by Conftest rule, exactly as the client design requires.
 
 ## 4. Phases
@@ -56,7 +56,7 @@ Each phase ends with exit criteria and a findings entry. Keep one running `findi
 
 ### Phase 0: Accounts and skeleton (one evening)
 
-- Create lab email, GitHub org and public repo (`identity-as-code-lab`), Okta Integrator Free Plan org, Entra tenant, Azure free account, ServiceNow PDI.
+- Create lab email, GitHub org and public repo (`identity-as-code-lab`), Okta Integrator Free Plan org, Entra tenant, Azure free account. (ServiceNow PDI dropped 2026-10-01; see findings log.)
 - Do NOT activate the Entra P2 trial yet. Its clock should start at Phase 2.
 - Install locally: Terraform CE (pinned, 1.11 or later for write-only arguments), Azure CLI, Okta CLI optional, SailPoint CLI, PowerShell 7 + Microsoft365DSC, Conftest, Node (for Prism).
 - Repo layout: `okta-inventory/`, `entra/legacy/`, `entra/platform/`, `entra/waves/`, `sailpoint/`, `policy/`, `.github/workflows/`, `docs/`.
@@ -87,7 +87,7 @@ Each phase ends with exit criteria and a findings entry. Keep one running `findi
 - Graph application permissions for the lab scope (CA + apps + groups): reader `Directory.Read.All`, `Policy.Read.All`; planner same as reader; applier `Application.ReadWrite.All`, `Group.ReadWrite.All`, `Policy.ReadWrite.ConditionalAccess`, `Application.Read.All` (the CA 403 fix). Grant admin consent once, from the break-glass account.
 - Azure Storage backend: one storage account, containers `tfstate-nonprod` and `tfstate-prod`, separate keys per layer (`legacy`, `platform`, `waves`). RBAC per section 3.
 - GitHub environments `nonprod` (no gate) and `prod` (required reviewer = a second GitHub account you control, so requester-is-not-author is enforced for real).
-- ServiceNow gate: a workflow step that reads the change number from the PR body, calls the PDI `table/change_request` API, and fails unless state is Scheduled or Implement and the planned window covers now.
+- Change gate: a workflow step that reads `Change: <system>:<id>` from the PR body, calls that system's adapter (lab: GitHub Issues), and fails unless the normalized state is scheduled or implement and the planned window covers now. Design: docs/change-gate-design.md.
 - Policy as code: Conftest rules on the plan JSON: every CA policy excludes the break-glass group; every new CA policy starts `enabledForReportingButNotEnforced`; no resource in `legacy/` may be destroyed.
 - Drift job: nightly `plan -detailed-exitcode` on prod; exit code 2 opens or updates a GitHub issue, nothing else.
 - Exit: a PR that violates a rule fails; a PR without a change ticket fails; a compliant PR applies to nonprod on merge and to prod after reviewer approval; drift issue opened once.
@@ -123,14 +123,14 @@ Each phase ends with exit criteria and a findings entry. Keep one running `findi
 
 - Write `docs/retro.md`: for each of the Step 1 to 4 design records, what the POC confirmed, what it contradicted, what it could not test.
 - Pull the estimate-relevant numbers: per-app normalization time, per-app translation time, claims mechanism decision, pipeline build hours.
-- Teardown: revoke the Okta private key, delete the Entra app registrations and the storage account, cancel the P2 trial, let the PDI lapse. Keep the repo (public, no secrets) as a portfolio artifact.
+- Teardown: revoke the Okta private key, delete the Entra app registrations and the storage account, cancel the P2 trial. Keep the repo (public, no secrets) as a portfolio artifact.
 
 ## 5. Calendar
 
 - Weeks 1 to 2: Phase 0 and 1. Okta org and Azure account are created; P2 not yet activated.
 - Day 1 of Phase 2 (start of week 3): activate P2 trial. Phases 2, 3, 4 and 6 must finish within the trial window. Budget three weeks.
 - Weeks 6 to 7: Phases 5, 7, 8.
-- Keep-alive: sign in to Okta and the PDI at least weekly so neither is reclaimed.
+- Keep-alive: sign in to Okta at least weekly so it is not deactivated.
 
 Total: roughly 14 evenings over about seven weeks. If the P2 trial turns out shorter than 30 days, compress Phases 2 to 4 and move Phase 6 to the P2 tenant's free period (the authentication methods policy does not need P2).
 
@@ -144,7 +144,7 @@ Total: roughly 14 evenings over about seven weeks. If the P2 trial turns out sho
 - Per-app HCL (HashiCorp Configuration Language) normalization time from Phase 1, scaled with a stated caveat about sample size.
 - The claims mechanism decision from Phase 2 (claims mapping policy vs custom claims policy vs portal), with evidence of what the provider sees and what it hides.
 - The Conftest rule set from Phase 3, reusable as-is.
-- The ServiceNow gate workflow from Phase 3, reusable with the client's instance URL.
+- The change-gate workflow from Phase 3, reusable with an adapter for the client's ITSM.
 - The honest statement that SailPoint behavior remains unvalidated until the client grants a non-prod ISC tenant, and the list of specific questions to answer there.
 - Any provider bug or version churn hit along the way, dated.
 

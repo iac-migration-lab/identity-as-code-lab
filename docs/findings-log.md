@@ -183,3 +183,11 @@ Append only. Newest entry at the bottom. Never rewrite an earlier entry; correct
 - Evidence: PUT response returned name, amount 10.0, Monthly, three notifications.
 - Change to the client plan, if any: None.
 - Accepted risks added, if any: The budget alerts but cannot stop spend; the "no spending cap" risk is reduced, not closed.
+
+## 2026-10-01, Phase 0, ServiceNow PDI unavailable; change gate made ITSM-agnostic
+- What the docs said: Plan: ServiceNow Personal Developer Instance (PDI) for the Phase 3 change gate (`table/change_request` API).
+- What actually happened: ServiceNow developer sign-up said no instances were available to join the waiting list. Owner chose to skip ServiceNow and design the change gate for any ITSM (IT Service Management) tool. New design in docs/change-gate-design.md: PR body names `Change: <system>:<id>`, one read-only adapter per ITSM returns a normalized record (state, window), and one shared check enforces it. Lab adapter uses GitHub Issues (labels for state, body lines for the window, `GITHUB_TOKEN` with `issues: read`). Plan and workflow placeholder updated to match.
+- Time taken: under 15 minutes.
+- Evidence: owner report of the ServiceNow sign-up message, 2026-10-01 (exact text not captured).
+- Change to the client plan, if any: Change gate becomes ITSM-agnostic; the client's tool plugs in as an adapter. The ServiceNow-specific REST call and state mapping are now unvalidated in the lab and must be confirmed against the client's instance.
+- Accepted risks added, if any: GitHub Issues as change records give no segregation of duties (any writer can relabel); the lab proves pipeline mechanics only.
