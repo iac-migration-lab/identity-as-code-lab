@@ -1,4 +1,4 @@
-Current phase: 0
+Current phase: 1
 
 # Findings Log
 
@@ -191,3 +191,20 @@ Append only. Newest entry at the bottom. Never rewrite an earlier entry; correct
 - Evidence: owner report of the ServiceNow sign-up message, 2026-10-01 (exact text not captured).
 - Change to the client plan, if any: Change gate becomes ITSM-agnostic; the client's tool plugs in as an adapter. The ServiceNow-specific REST call and state mapping are now unvalidated in the lab and must be confirmed against the client's instance.
 - Accepted risks added, if any: GitHub Issues as change records give no segregation of duties (any writer can relabel); the lab proves pipeline mechanics only.
+
+## 2026-10-01, Phase 0, Exit check passed; Phase 0 closed
+- What the docs said: Phase 0 exit: every account reachable; `terraform -version`, `sail --version`, `conftest --version` recorded in this log.
+- What actually happened (all checks read-only):
+  - GitHub: `iac-migration-lab/identity-as-code-lab`, PUBLIC, default branch `main`, local in sync with origin.
+  - Azure: signed in as `la-migration-lab@outlook.com`; `Azure subscription 1` (6ea51c80-90de-4914-bbc6-2af9b54bba9f) Enabled; budget `budget-iac-lab-monthly` $10, current spend $0.00.
+  - Entra: tenant bed5d4c3-98f0-4c73-9e4c-0b6cd3b9a0a4, display name `IaC Migration Lab` (owner renamed it), domain `lamigrationlaboutlook.onmicrosoft.com`. P2 trial not activated.
+  - Okta: `https://integrator-2631921.okta.com/.well-known/openid-configuration` returned HTTP 200 with issuer `https://integrator-2631921.okta.com`; owner has signed in to the Admin Console. Okta management API not tested yet (no service app until Phase 1).
+  - ITSM: none; GitHub Issues stand-in needs no account (see docs/change-gate-design.md).
+  - Tools: Terraform v1.16.4, sail version 2.6.0, Conftest 0.71.0 (full list in the "Install finished" entry).
+  - Repo layout matches the plan.
+- Time taken: Phase 0 total about 4 hours in one evening (plan said one evening).
+- Evidence: `gh repo view`, `az account show`, Graph GET /organization, Consumption budget GET, curl to the Okta OpenID Connect discovery URL, tool version commands; Claude Code session 2026-10-01.
+- Change to the client plan, if any: Phase 0 changes are in the entries above: Okta rejects free email providers; a new Azure account cannot create a second workforce tenant; Azure free account is Pay-As-You-Go with no spending limit; ServiceNow PDI unavailable; GitHub repo must be public for free environment gates and environment secrets.
+- Accepted risks added, if any: None new.
+
+Current phase set to 1 at the top of this log.
