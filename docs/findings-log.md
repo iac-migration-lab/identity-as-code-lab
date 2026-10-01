@@ -150,3 +150,15 @@ Append only. Newest entry at the bottom. Never rewrite an earlier entry; correct
 - Evidence: Org URL supplied by the owner 2026-10-01.
 - Change to the client plan, if any: Free email providers fail Okta's "Work Email" check; lab staff need an address on a domain that is not tied to any production tenant. Budget a cheap throwaway domain if a clean separation is required.
 - Accepted risks added, if any: Okta lab super admin uses `mark@lencioni.io`. Never connect this Okta org to the lencioni.io tenant (no Microsoft IdP, no Org2Org, no SCIM toward lencioni.io). That address can no longer sign up for another Integrator org (unique email per org). Enroll MFA on the Okta admin.
+
+## 2026-10-01, Phase 0, Azure account created; no spending limit
+- What the docs said: Plan section 2: Azure free account, $200 credit for 30 days, credit card required, Terraform state storage costs pennies.
+- What actually happened:
+  - Owner signed up as `la-migration-lab@outlook.com` in a private browser window. `az login` shows one subscription, `Azure subscription 1` (6ea51c80-90de-4914-bbc6-2af9b54bba9f), in tenant `Default Directory` (bed5d4c3-98f0-4c73-9e4c-0b6cd3b9a0a4).
+  - Read-only Graph check: the tenant's only verified domain is `lamigrationlaboutlook.onmicrosoft.com`. No link to lencioni.io.
+  - Read-only Azure Resource Manager check: offer `PayAsYouGo_2014-09-01`, spending limit `Off`. Usage past the credit bills the card with no automatic stop. The plan assumed a capped free-trial offer.
+  - Microsoft Learn "Access and create new tenant" (updated 2026-08-21) says only paid customers can create a new workforce tenant and that free-tenant or trial-subscription customers cannot. A Pay-As-You-Go offer suggests creating the lab tenant is allowed; UNVERIFIED until tried.
+- Time taken: about 20 minutes.
+- Evidence: `az account show`, `az rest` GET on /organization and on the subscription, Claude Code session 2026-10-01.
+- Change to the client plan, if any: Before any spend, check the subscription offer and spending limit; set a budget alert on day one.
+- Accepted risks added, if any: No spending cap on the lab subscription until a budget alert exists.

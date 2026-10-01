@@ -11,6 +11,8 @@ Prefix `iac` (Infrastructure as Code) everywhere. Dashes where the platform allo
 | Entra tenant display name | `IaC Migration Lab` | Display only; changeable later. |
 | Entra initial domain | `iacmigrationlab.onmicrosoft.com` | No dashes. UNVERIFIED: whether the initial domain prefix accepts hyphens; letters and numbers only is the safe choice. Permanent once created. |
 | Okta org | `integrator-2631921` | Created 2026-10-01, Integrator Free Plan. Org URL `https://integrator-2631921.okta.com`, Admin Console `https://integrator-2631921-admin.okta.com`. Signed up with `mark@lencioni.io` because Okta rejected the Outlook.com address (see findings log). |
+| Azure account default tenant | `Default Directory` (`lamigrationlaboutlook.onmicrosoft.com`, tenant ID `bed5d4c3-98f0-4c73-9e4c-0b6cd3b9a0a4`) | Created automatically with the Azure account 2026-10-01. Holds the subscription only; not the lab tenant. |
+| Azure subscription | `Azure subscription 1` (`6ea51c80-90de-4914-bbc6-2af9b54bba9f`) | Owner sign-in `la-migration-lab@outlook.com`. Offer `PayAsYouGo_2014-09-01`, spending limit Off. |
 | Azure resource group | `rg-iac-lab` | One region for everything; record it here after creation. |
 | Azure storage account | `stiaclabtfstate` | 3 to 24 lowercase letters and digits, no dashes, globally unique. If taken, append two digits (`stiaclabtfstate01`). Containers: `tfstate-nonprod`, `tfstate-prod`. |
 | Entra app registration (read) | `iac-reader` | Fixed by CLAUDE.md. |
