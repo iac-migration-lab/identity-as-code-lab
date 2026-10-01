@@ -162,3 +162,16 @@ Append only. Newest entry at the bottom. Never rewrite an earlier entry; correct
 - Evidence: `az account show`, `az rest` GET on /organization and on the subscription, Claude Code session 2026-10-01.
 - Change to the client plan, if any: Before any spend, check the subscription offer and spending limit; set a budget alert on day one.
 - Accepted risks added, if any: No spending cap on the lab subscription until a budget alert exists.
+
+## 2026-10-01, Phase 0, Lab Entra tenant is the Azure Default Directory
+- What the docs said: Plan Phase 0: create a new Entra tenant. docs/lab-naming.md: `iacmigrationlab.onmicrosoft.com`. Microsoft Learn "Access and create new tenant" (updated 2026-08-21): only paid customers can create a new workforce tenant; if **Microsoft Entra ID** is unavailable on the Basics tab, review the paid-customer requirement.
+- What actually happened:
+  - First attempt reported success, but only `Default Directory` existed (checked with a read-only ARM `/tenants` call and in the portal's Directories + subscriptions).
+  - Read-only check of the subscription, resource groups, resources, and 24-hour activity log: nothing extra created.
+  - On retry, **Manage tenants** > **Create** offered only **Governed Workforce** and **External**; plain **Microsoft Entra ID** was missing, even though the subscription offer is Pay-As-You-Go.
+  - Governed Workforce rejected: it creates a resource group and billing asset and a permanent governance link to the home tenant, none of which the plan covers. External is for customer identity (CIAM), wrong type.
+  - Owner chose to use the Default Directory (`lamigrationlaboutlook.onmicrosoft.com`, tenant ID bed5d4c3-98f0-4c73-9e4c-0b6cd3b9a0a4) as the lab tenant. docs/lab-naming.md updated: initial domain, break-glass UPN `bg-admin-01@lamigrationlaboutlook.onmicrosoft.com`. Display name to be renamed to `IaC Migration Lab` by the owner.
+- Time taken: about 30 minutes.
+- Evidence: `az rest` GET https://management.azure.com/tenants, `az account list --all`, `az group list`, `az resource list`, `az monitor activity-log list --offset 1d`, Claude Code session 2026-10-01; owner's portal observations.
+- Change to the client plan, if any: A new Azure Pay-As-You-Go account cannot create an extra plain workforce tenant (UNVERIFIED whether this changes after the first paid invoice). Labs should plan on the sign-up Default Directory as the test tenant.
+- Accepted risks added, if any: The Azure subscription that will hold Terraform state lives in the same tenant as the lab's Conditional Access policies; a bad CA policy can lock the owner out of the state storage too. Break-glass exclusion (module + Conftest rule) covers this; the owner account `la-migration-lab@outlook.com` is a personal Microsoft account and should also be excluded from CA policies in the lab.
