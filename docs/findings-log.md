@@ -175,3 +175,11 @@ Append only. Newest entry at the bottom. Never rewrite an earlier entry; correct
 - Evidence: `az rest` GET https://management.azure.com/tenants, `az account list --all`, `az group list`, `az resource list`, `az monitor activity-log list --offset 1d`, Claude Code session 2026-10-01; owner's portal observations.
 - Change to the client plan, if any: A new Azure Pay-As-You-Go account cannot create an extra plain workforce tenant (UNVERIFIED whether this changes after the first paid invoice). Labs should plan on the sign-up Default Directory as the test tenant.
 - Accepted risks added, if any: The Azure subscription that will hold Terraform state lives in the same tenant as the lab's Conditional Access policies; a bad CA policy can lock the owner out of the state storage too. Break-glass exclusion (module + Conftest rule) covers this; the owner account `la-migration-lab@outlook.com` is a personal Microsoft account and should also be excluded from CA policies in the lab.
+
+## 2026-10-01, Phase 0, Budget alert on the lab subscription
+- What the docs said: Previous entry: no spending cap until a budget alert exists.
+- What actually happened: Owner approved. Claude created `budget-iac-lab-monthly` on subscription 6ea51c80-90de-4914-bbc6-2af9b54bba9f with `az rest --method put` to `Microsoft.Consumption/budgets` (api-version 2023-05-01): Cost category, $10 monthly, 2026-10-01 to 2027-09-30, actual-cost email alerts at 50/80/100% to `la-migration-lab@outlook.com`. Created by hand, not by Terraform; import it when the Azure state stack exists, or recreate it in code.
+- Time taken: under 5 minutes.
+- Evidence: PUT response returned name, amount 10.0, Monthly, three notifications.
+- Change to the client plan, if any: None.
+- Accepted risks added, if any: The budget alerts but cannot stop spend; the "no spending cap" risk is reduced, not closed.
