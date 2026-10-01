@@ -101,3 +101,16 @@ Append only. Newest entry at the bottom. Never rewrite an earlier entry; correct
 - Evidence: `gh repo view --json visibility,url`; https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments
 - Change to the client plan, if any: Decide before Phase 1 workflows: (a) make the lab repo public (nothing secret is committed; federated credentials need no stored secret), or (b) stay private and replace environment gates with branch protection plus a manual `workflow_dispatch` apply, with secrets at repo level. Client plan should state that environment-gated applies on private repos need GitHub Enterprise.
 - Accepted risks added, if any: Until decided, the repo has no enforceable apply gate; no apply workflow exists yet, so no live exposure.
+
+## 2026-10-01, Phase 0, Repo moved to lab org per docs/lab-naming.md
+- What the docs said: docs/lab-naming.md and the plan put the repo at `iac-migration-lab/identity-as-code-lab`, public, in a free lab org, not under the owner's personal account.
+- What actually happened:
+  - Claude had created `mlencioni/okta-to-entra-migration` without reading docs/lab-naming.md (process miss; caught during the pre-public scan, before anything was public).
+  - Pre-public scan of all tracked files and full history: no secrets, keys, or client names. Only personal data: owner's name and personal email as commit author on all commits.
+  - Owner created org `iac-migration-lab` (Free plan) in the browser; owner is admin.
+  - Claude transferred and renamed the repo with `gh api -X POST repos/mlencioni/okta-to-entra-migration/transfer -f new_owner=iac-migration-lab -f new_name=identity-as-code-lab`, and set `origin` to https://github.com/iac-migration-lab/identity-as-code-lab.git. Still PRIVATE.
+  - Local folder name stays `okta-to-entra-migration`; only the GitHub name changed.
+- Time taken: about 15 minutes.
+- Evidence: `gh api repos/iac-migration-lab/identity-as-code-lab --jq '.full_name + " " + .visibility'` returned `iac-migration-lab/identity-as-code-lab private`.
+- Change to the client plan, if any: Read the naming doc before creating any named resource.
+- Accepted risks added, if any: None yet; author email decision pending before the repo goes public.
