@@ -41,7 +41,7 @@ Every account reachable; `terraform -version`, `sail --version`, `conftest --ver
 Goal: a realistic small Okta org, a read-only Terraform inventory of it, and a nightly snapshot that catches drift.
 
 ### Steps
-1. **Seed the Okta org by hand** in the Admin Console (this is the "source" being migrated):
+1. **Seed the Okta org** (this is the "source" being migrated). Run 1: `okta-inventory/seed/seed-okta-org.sh`, spec in docs/okta-seed-spec.md:
    - 8 users. The Integrator Free Plan allows 10 active users and the admin counts as one, so stay at 8.
    - 3 groups: `IT`, `CustServ`, `Finance`.
    - 3 custom SAML 2.0 apps, one per group, pointed at a free SAML test SP (service provider). UNVERIFIED: samltest.id is still running; pick a working free SAML tester before starting.

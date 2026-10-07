@@ -1,4 +1,5 @@
-Current phase: 1
+Current run: 1 (Implementation Phase 0)
+Current lab phase: 1
 
 # Findings Log
 
@@ -7,7 +8,7 @@ Append only. Newest entry at the bottom. Never rewrite an earlier entry; correct
 ## Entry template
 
 ```
-## YYYY-MM-DD, Phase N, short title
+## YYYY-MM-DD, Run N, Lab Phase N, short title
 - What the docs said:
 - What actually happened:
 - Time taken:
@@ -208,3 +209,11 @@ Append only. Newest entry at the bottom. Never rewrite an earlier entry; correct
 - Accepted risks added, if any: None new.
 
 Current phase set to 1 at the top of this log.
+
+## 2026-10-07, Run 1, Lab Phase 1, Lab reframed as Implementation Phase 0; permissions opened up
+- What the docs said: CLAUDE.md required a least-privilege block and owner approval before every grant, cloud change, or write API call; no SSWS tokens; no local `terraform apply`.
+- What actually happened: Owner named this lab "Claude Identity as Code Implementation Phase 0" (IP0): personal free accounts and dummy data, to learn the CI/CD pipelines and migration code. Owner will run IP0 at least three times; run 1 goal is to see it all work. Owner pre-approved any permission and any lab resource change. CLAUDE.md rewritten: the least-privilege gate is replaced by docs/permission-register.md (every grant logged with a production verdict); local apply allowed for bootstrap and to get unstuck; isolation from `lencioni.io` and no-secrets-in-repo stay absolute. Plan phases are now "lab phases". Added docs/migration-runbook.md (skeleton). Added docs/okta-seed-spec.md and okta-inventory/seed/seed-okta-org.sh (not run yet). SAML test SP chosen: `sptest.iamshowcase.com` (samltest.id is down).
+- Time taken: about 30 minutes.
+- Evidence: this commit.
+- Change to the client plan, if any: Production permissions come from the register's "Production should use" column, not from the lab.
+- Accepted risks added, if any: Lab identities may hold broader grants than production would allow; each is listed in the register.

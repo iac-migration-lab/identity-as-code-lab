@@ -1,51 +1,66 @@
 # Identity as Code Lab
 
-Personal proof of concept of an Okta-to-Microsoft Entra ID migration run "as code", with SailPoint as the provisioning standard, on free-tier throwaway accounts. The owner is a buy-side IAM (Identity and Access Management) architect learning the method hands-on, not a developer.
+Personal proof of concept of an Okta-to-Microsoft Entra ID migration run "as code", with SailPoint as the provisioning standard. The owner is a buy-side IAM (Identity and Access Management) architect learning the method hands-on, not a developer.
+
+## Implementation Phase 0 (this repo)
+- **Name:** Claude Identity as Code Implementation Phase 0 (IP0). It covers this repo, the lab Okta org (`integrator-2631921`), and the lab Entra tenant (`lamigrationlaboutlook.onmicrosoft.com`). Later implementation phases move toward the real client build.
+- **Purpose:** prove identity as code end to end: GitHub (CI/CD (continuous integration and delivery) pipelines, state, gates), Okta as the source, Entra as the target, and migration of basic OIDC (OpenID Connect) and SAML (Security Assertion Markup Language) apps.
+- **Deliverables:** working code and pipelines; Terraform state information (backend, keys, what each state holds); docs/permission-register.md; docs/migration-runbook.md, a migration execution runbook built from what each run teaches.
+- **Runs:** the owner will run IP0 at least three times before building for real. Current run is at the top of docs/findings-log.md. **Run 1 goal: see it all work.** Favor progress over polish; record shortcuts so later runs can remove them.
+- **Inside IP0,** the numbered plan phases in docs/poc-plan-identity-as-code-free-tier.md are called "lab phases" (Lab Phase 0 to 8). "Phase N" in older findings entries means Lab Phase N.
+- **Environments are throwaway:** personal free accounts, dummy data only, nothing to do with any client.
 
 ## Read first, every session
-- docs/poc-plan-identity-as-code-free-tier.md — the plan. Phases run in order. Current phase is tracked at the top of docs/findings-log.md.
-- docs/terraform-provider-analysis-okta-entra-sailpoint.md — provider facts, limits, known bugs.
-- docs/findings-log.md — what has actually happened so far. Append, never rewrite.
+- docs/findings-log.md: current run and lab phase at the top; what has actually happened. Append, never rewrite.
+- docs/build-phases.md: step-by-step run book per lab phase.
+- docs/permission-register.md: every grant made so far.
+- docs/poc-plan-identity-as-code-free-tier.md and docs/terraform-provider-analysis-okta-entra-sailpoint.md as needed.
 
-## Hard rules
-- Throwaway accounts only. Never reference or configure the owner's company Microsoft 365 tenant, company SharePoint, production GitHub organization, or any client environment. If a step would, stop and say so.
-- Never run `terraform apply` locally. Applies happen only through the GitHub Actions pipeline with environment gates. Local use is `init`, `validate`, `fmt`, `plan`, and `import`/`-generate-config-out`.
-- Never write a secret, private key, client secret, or exported user JSON into the repo, into CLAUDE.md, or into a commit. Secrets live in GitHub environment secrets; state lives in Azure Storage; PII (personally identifiable information) exports go to Azure Blob only.
-- Do not activate the Entra ID P2 trial, and do not create any Entra resource that requires P1/P2, until findings-log.md says Phase 2 has started.
-- Ask before: creating or deleting any cloud resource, granting any permission or scope, running any command that calls a provider API with write intent, or force-pushing.
+## Hard rules (still absolute)
+- Never reference or configure the owner's company Microsoft 365 tenant (`lencioni.io`), company SharePoint, any production GitHub organization, or any client environment. Never connect the lab Okta org to `lencioni.io`. If a step would, stop and say so.
+- Never write a secret, private key, API token, client secret, or exported user JSON into the repo, CLAUDE.md, or a commit (the repo is public). Local secrets live under `~/.okta-lab/` (chmod 600); pipeline secrets live in GitHub environment secrets.
 
-## Least-privilege gate
-Before proposing any grant (scope, role, Graph permission, RBAC, secret), state in one short block: minimum needed, what broader would add, blast radius if leaked, cost of going narrow. Build the narrow one. Fixed decisions:
-- Okta: OAuth 2.0 API service app, private key JWT (JSON Web Token), read-only scopes + Read-only Administrator role for inventory; separate `okta.apps.manage`-only identity for cutover, disabled between waves. No SSWS API tokens.
-- Entra: app registrations `iac-reader`, `iac-planner`, `iac-applier` with federated credentials from GitHub Actions; no client secrets; Graph application permissions scoped to the current phase; admin consent only from the break-glass account.
-- Break-glass account excluded from every Conditional Access policy, by module and by Conftest rule.
+## Autonomy in the lab
+The owner pre-approves any permission, scope, role, or secret in the lab accounts, and any create, change, or delete of lab resources. Do what the run needs without asking; the owner is working on other things in parallel.
+- Ask only before: touching anything outside the lab accounts; anything that costs money beyond the $10 monthly budget alert or needs a paid SKU (stock keeping unit, a paid product tier); deleting a whole account, tenant, org, or the repo; force-pushing `main`.
+- When only the owner can do something (console-only step, browser sign-in), give one copy-pasteable command or a short click path and ask for the output.
+- Prefer the pipeline for changes to migrated objects (Entra apps, CA (Conditional Access) policies, waves), because proving the pipeline is the point. Local `terraform apply`, CLI (command-line interface) calls, and scripts are allowed for bootstrap and to get unstuck; log each one in the findings log.
+- Activate the Entra ID P2 trial when the lab reaches work that needs it; log the date.
+
+## Permission register (replaces the least-privilege gate)
+For every grant (scope, admin role, Graph permission, RBAC (role-based access control) role, token, secret, consent), add a row to docs/permission-register.md **at the time of the grant**: identity, what was granted, why, run, production verdict (OK / not OK / OK with changes), and what production should use instead. Broad grants are fine in the lab; an unregistered grant is not.
+
+Production target design (what the register compares against):
+- Okta: OAuth 2.0 service apps with private key JWT (JSON Web Token), no SSWS API tokens; read-only scopes + Read-only Administrator for inventory; `okta.apps.manage`-only cutover identity, disabled between waves.
+- Entra: `iac-reader`, `iac-planner`, `iac-applier` with GitHub Actions federated credentials, no client secrets, Graph application permissions scoped per phase, admin consent from break-glass only.
+- Break-glass excluded from every CA policy, by module and by Conftest rule. Keep this in the lab too, so we don't lock ourselves out.
 
 ## How to answer
 - Define every acronym in parentheses on first use, including HCL (HashiCorp Configuration Language).
-- Verify provider arguments, CLI flags, and portal paths against current docs before using them; prefix anything unverified with `UNVERIFIED:`.
+- Verify provider arguments, CLI flags, and portal paths against current docs; prefix anything unverified with `UNVERIFIED:`. In run 1, try it and log the result rather than stalling on verification.
 - Outline format. Short.
-- When you need something from the owner, give one copy-pasteable command and ask for the output.
 - One question per turn at most.
 - Pin every provider and tool version. Record versions in findings-log.md.
 - File names use dashes, not underscores.
 
 ## Repo layout
-okta-inventory/   read-only Terraform for the Okta org, import blocks, generated + normalized HCL
+okta-inventory/   Terraform for the Okta org (import blocks, generated + normalized HCL); seed/ holds the one-off seeding script
 entra/legacy/     brownfield-imported Entra objects, prevent_destroy on everything
 entra/platform/   new shared Entra objects (groups, named locations, auth strengths, CA)
 entra/waves/      per-wave app migrations
 sailpoint/        SP-Config JSON and the mock-server pipeline
 policy/           Conftest (OPA, Open Policy Agent) rules
 .github/workflows/  snapshot, plan, apply, drift, change-gate
-docs/             plan, analysis, findings-log, retro
+docs/             plan, analysis, findings-log, permission register, migration runbook, retro
 
 ## Commands
+source lab-tools/env.sh                             # pinned tools on PATH
 terraform fmt -recursive && terraform validate     # before every commit
 conftest test --policy policy/ <plan.json>          # policy check on a plan
 sail --version                                      # SailPoint CLI present
 
 ## Findings entry template
-## YYYY-MM-DD, Phase N, short title
+## YYYY-MM-DD, Run N, Lab Phase N, short title
 - What the docs said:
 - What actually happened:
 - Time taken:
